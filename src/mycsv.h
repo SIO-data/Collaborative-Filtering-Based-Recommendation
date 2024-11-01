@@ -18,7 +18,4 @@ int read_target_csv(const char *filename, int **user_resto);
 // Function to write a CSV file with estimated results
 int write_estimated_csv(const char *filename, float *output, int **user_resto);
 
-// Function to write the data array to a CSV file
-int write_csv(const char *filename, float **data);
-
 #endif // CSV_UTILS_H
