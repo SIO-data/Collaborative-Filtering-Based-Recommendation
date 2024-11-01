@@ -79,7 +79,7 @@ void* perform_task(void* arg) {
     float *bars = th_data->bars;
 
     int start = thread_id * (40000 / THREADS);
-    int end = (thread_id + 40000) * (40000 / THREADS);
+    int end = (thread_id + 1) * (40000 / THREADS);
     if (thread_id == THREADS - 1) {
         end = 40000;
     }
