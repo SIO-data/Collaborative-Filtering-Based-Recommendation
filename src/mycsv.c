@@ -87,24 +87,15 @@ int write_estimated_csv(const char *filename, float *output, int **user_resto) {
 }
 
 // Function to write the data array to a CSV file
-int write_csv(const char *filename, float **data) {
+int write_csv(const char *filename, float *data, int **user_resto) {
     FILE *file = fopen(filename, "w");
     if (!file) {
         perror("Failed to open file");
         return -1;
     }
 
-    fprintf(file, "DATASET");
-    for (int i = 0; i < COLS; i++) {
-        fprintf(file, ";Restaurant%d", i+1);
-    }
-
-    for (int i = 0; i < ROWS; i++) {
-        fprintf(file, "User%d;", i+1);
-        for (int j = 0; j < COLS; j++) {
-            fprintf(file, "%f;", data[i][j]);
-        }
-        fprintf(file, "\n");
+    for (int i = 0; i < 40000; i++) {
+        fprintf(file, "User%d;Restaurant%d;%f\n", user_resto[i][0], user_resto[i][1], data[i]);
     }
 
     fclose(file);

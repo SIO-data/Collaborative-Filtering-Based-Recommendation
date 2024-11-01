@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
 
     printf("Writing to CSV file...\n");
 
-    if (write_csv("./assets/data/output.csv", output, 40000) != 0) {
+    if (write_csv("./assets/data/output.csv", output, user_resto) != 0) {
         return 1;  // Exit if file write fails
     }
 
