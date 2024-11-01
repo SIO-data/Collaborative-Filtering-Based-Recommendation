@@ -8,7 +8,7 @@
 
 #define ROWS 73421   // Replace with actual row count of your dataset
 #define COLS 100     // Replace with actual column count, excluding the first column
-#define THREADS 8
+#define THREADS 1
 
 float _bar(float *user){
     float sum = 0.0f;
@@ -45,17 +45,20 @@ float pearson(float *user1, float *user2, float bar1, float bar2){
 }
 
 float _estimation(int user, int resto, float *bar, float **data){
-    float estimation = bar[user];
+    float estimation = 0.0f;
     float num = 0;
     float den = 0;
     for (int u = 0; u < ROWS; u++){
-        if (u != user){
+        if (u != user && data[u][resto] != 99.0f){
             float _pearson = pearson(data[user], data[u], bar[user], bar[u]);
+            if (isnan(_pearson)) {
+                _pearson = 0.0f;
+            }
             num += (_pearson * powf(fabsf(_pearson), 1.5f) * (data[u][resto] - bar[u]));
             den += (powf(fabsf(_pearson), 2.5f));
         }
     }
-    estimation += (num/den);
+    estimation = bar[user] + (num / den);
     return estimation;
 }
 
@@ -76,7 +79,7 @@ void* perform_task(void* arg) {
     float *bars = th_data->bars;
 
     int start = thread_id * (40000 / THREADS);
-    int end = (thread_id + 1) * (40000 / THREADS);
+    int end = (thread_id + 40000) * (40000 / THREADS);
     if (thread_id == THREADS - 1) {
         end = 40000;
     }
