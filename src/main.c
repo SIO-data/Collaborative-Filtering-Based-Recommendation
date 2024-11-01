@@ -138,7 +138,6 @@ int main(int argc, char *argv[]) {
     if (read_target_csv("./assets/data/template.csv", user_resto) != 0) {
         return 1;  // Exit if file read fails
     }
-
  
     // ------------------------------------------------- //
     // ------------ Compute User Estimations ----------- //
@@ -169,6 +168,14 @@ int main(int argc, char *argv[]) {
     // ------------------------------------------------- //
     // ----------------- Write to CSV ------------------ //
     // ------------------------------------------------- //
+
+    printf("Writing to CSV file...\n");
+
+    if (write_csv("./assets/data/output.csv", output, 40000) != 0) {
+        return 1;  // Exit if file write fails
+    }
+
+    printf("CSV file written successfully.\n");
 
     // Free allocated memory
     for (int i = 0; i < ROWS; i++) {
