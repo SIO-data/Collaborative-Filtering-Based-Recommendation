@@ -13,7 +13,8 @@
 struct thread_data {
     int thread_id;
     float **data;
-    float **estimate_data;
+    float *output;
+    int **user_resto;
 };
 
 
@@ -23,10 +24,10 @@ float compute_similarity(float *user1, float *user2) {
     float distance = 0.0f;
     for (int i = 0; i < COLS; i++) {
         if (user1[i] != 99.0f && user2[i] != 99.0f) {
-            distance += powf(fabsf(user1[i] - user2[i]), 2);
+            distance += (fabsf(user1[i] - user2[i]));
         }
     }
-    similarity = 1.0f / (1.0f + sqrtf(distance));
+    similarity = 1.0f / (1.0f + (distance));
     return similarity;
 }
 
@@ -73,30 +74,56 @@ float *compute_user_estimation(float **data, int user) {
     return estimation;
 }
 
+float compute_user_resto_estimation(float **data, int user, int resto){
+    float *similarities = compute_all_similarities(data, user);
+    float sum_similarities = 0.0f;
+    /*for (int i = 0; i < ROWS; i++) {
+        if (similarities[i] > THRESHOLD) {
+            sum_similarities += powf(similarities[i], IMPORTANCE);
+        }
+    }
+
+    float estimation = 0.0f;
+    for (int i = 0; i < ROWS; i++) {
+        if (data[i][resto] != 99.0f && similarities[i] > THRESHOLD) {
+            estimation += powf(similarities[i], IMPORTANCE) * data[i][resto];
+        }
+    }
+    estimation = estimation / sum_similarities;*/
+
+    int closest_users = 0;
+    float similarity = 0.0f;
+    for (int i = 0; i < ROWS; i++) {
+        if (similarities[i] > similarity && data[i][resto] != 99.0f) {
+            similarity = similarities[i];
+            closest_users = i;
+        }
+    }
+
+    free(similarities);
+
+    float estimation = data[closest_users][resto];
+
+    return estimation;
+}
+
 void* perform_task(void* arg) {
     struct thread_data *th_data = (struct thread_data *)arg;
     int thread_id = th_data->thread_id;
     float **data = th_data->data;
-    float **estimate_data = th_data->estimate_data;
-    printf("Thread %d is running\n", thread_id);
+    float *output = th_data->output;
+    int **user_resto = th_data->user_resto;
 
-    int start = thread_id * (ROWS / THREADS);
-    int end = (thread_id + 1) * (ROWS / THREADS);
-    
-    for (int user = start; user < end; user++) {
-        float *estimation = compute_user_estimation(data, user);
-        for (int i = 0; i < COLS; i++) {
-            estimate_data[user][i] = estimation[i];
-        }
-        free(estimation);
+    int start = thread_id * (40000 / THREADS);
+    int end = (thread_id + 1) * (40000 / THREADS);
 
-        if (user % 200 == 0) {
-            printf("Thread %d: Done with user %d\n", thread_id, user);
-        }
-
+    for (int row = start; row < end; row++) {
+        int user = user_resto[row][0];
+        int resto = user_resto[row][1];
+        float estimation = compute_user_resto_estimation(data, user-1, resto-1);
+        output[row] = estimation;
     }
     
-    printf("Thread %d has finished\n", thread_id);
     free(arg);  // Free the memory allocated for thread ID
     return NULL;
 }
@@ -165,6 +192,31 @@ int write_csv(const char *filename, float **data) {
     return 0;
 }
 
+int read_target_csv(const char *filename, int **user_resto) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Failed to open file");
+        return -1;
+    }
+
+    char line[1024];
+    int row = 0;
+    int userNum, restaurantNum;
+
+    while (fgets(line, 1024, file) && row < 40000) {
+        if (sscanf(line, "User%d;Restaurant%d;", &userNum, &restaurantNum) == 2) {
+            user_resto[row][0] = userNum;
+            user_resto[row][1] = restaurantNum;
+        } else {
+            printf("Échec de l'analyse des données de la ligne : %s", line);
+        }
+        row++;
+    }
+
+    fclose(file);
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     printf("Allocating memory for data and user_coef...\n");
 
@@ -178,6 +230,11 @@ int main(int argc, char *argv[]) {
     float **estimate_data = (float **)malloc(ROWS * sizeof(float *));
     for (int i = 0; i < ROWS; i++) {
         estimate_data[i] = (float *)malloc(COLS * sizeof(float));
+    }
+
+    int **user_resto = (int **)malloc(40000 * sizeof(int *));
+    for (int i = 0; i < 40000; i++) {
+        user_resto[i] = (int *)malloc(2 * sizeof(int));
     }
 
     /*/ Allocate memory for user_coef array
@@ -198,6 +255,12 @@ int main(int argc, char *argv[]) {
     }
 
     printf("CSV file read successfully.\n");
+
+    printf("Reading target CSV file...\n");
+
+    if (read_target_csv("./assets/data/template.csv", user_resto) != 0) {
+        return 1;  // Exit if file read fails
+    }
 
     printf("Calculating user coefficients...\n");
 
@@ -228,7 +291,7 @@ int main(int argc, char *argv[]) {
 
     printf("Computing user estimations...\n");
 
-    pthread_t threads[THREADS];
+    /*pthread_t threads[THREADS];
     for (int i = 0; i < THREADS; i++) {
         int *thread_id = (int *)malloc(sizeof(int));
         *thread_id = i;
@@ -241,15 +304,39 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < THREADS; i++) {
         pthread_join(threads[i], NULL);
+    }*/
+
+    float *output = malloc(40000 * sizeof(float));
+   
+    pthread_t threads[THREADS];
+    for (int i = 0; i < THREADS; i++) {
+        struct thread_data *th_data = (struct thread_data *)malloc(sizeof(struct thread_data));
+        th_data->thread_id = i;
+        th_data->data = data;
+        th_data->output = output;
+        th_data->user_resto = user_resto;
+        pthread_create(&threads[i], NULL, perform_task, (void *)th_data);
+    }
+
+    for (int i = 0; i < THREADS; i++) {
+        pthread_join(threads[i], NULL);
     }
 
     printf("User estimations computed successfully.\n");
-
     printf("Writing estimated data to CSV file...\n");
 
-    if (write_csv("./assets/data/estimated_dataset.csv", estimate_data) != 0) {
-        return 1;  // Exit if file write fails
+    //Open file output.csv
+    FILE *file = fopen("./assets/data/estimated_dataset.csv", "w");
+    if (!file) {
+        perror("Failed to open file");
+        return -1;
     }
+
+    for (int row = 0; row < 40000; row++) {
+        fprintf(file, "User%d;Restaurant%d;%f\n", user_resto[row][0], user_resto[row][1], output[row]);
+    }
+
+    fclose(file);
 
     printf("CSV file written successfully.\n");
 
