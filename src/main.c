@@ -141,6 +141,8 @@ int main(int argc, char *argv[]) {
     if (read_target_csv("./assets/data/template.csv", user_resto) != 0) {
         return 1;  // Exit if file read fails
     }
+
+    printf("Target CSV file read successfully.\n");
  
     // ------------------------------------------------- //
     // ------------ Compute User Estimations ----------- //
