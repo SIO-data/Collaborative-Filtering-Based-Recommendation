@@ -169,9 +169,8 @@ int main(int argc, char *argv[]) {
     float *bars = _all_bar(data);
 
     // Compute all pearson values
-    float **pearson_matrix = all_pearson(data, bars);
+    //float **pearson_matrix = all_pearson(data, bars);
 
-    /*
     printf("Computing user estimations...\n");
 
     pthread_t threads[THREADS];
@@ -190,7 +189,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("User estimations computed successfully.\n");
-    */
 
     // ------------------------------------------------- //
     // ----------------- Write to CSV ------------------ //
