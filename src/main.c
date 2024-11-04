@@ -44,6 +44,23 @@ float pearson(float *user1, float *user2, float bar1, float bar2){
     return num / (sqrtf(den1) * sqrtf(den2));
 }
 
+float **all_pearson(float **data, float *bars){
+    float **pearson_matrix = (float **)malloc(ROWS * sizeof(float *));
+    for (int i = 0; i < ROWS; i++) {
+        pearson_matrix[i] = (float *)malloc((ROWS - i - 1) * sizeof(float));
+    }
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = i+1; j < ROWS; j++) {
+            if (i == j) {
+                pearson_matrix[i][j] = 1.0f;
+            } else {
+                pearson_matrix[i][j] = pearson(data[i], data[j], bars[i], bars[j]);
+            }
+        }
+    }
+    return pearson_matrix;
+}
+
 float _estimation(int user, int resto, float *bar, float **data){
     float estimation = 0.0f;
     float num = 0;
@@ -151,6 +168,10 @@ int main(int argc, char *argv[]) {
     // Compute all _bar values
     float *bars = _all_bar(data);
 
+    // Compute all pearson values
+    float **pearson_matrix = all_pearson(data, bars);
+
+    /*
     printf("Computing user estimations...\n");
 
     pthread_t threads[THREADS];
@@ -169,6 +190,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("User estimations computed successfully.\n");
+    */
 
     // ------------------------------------------------- //
     // ----------------- Write to CSV ------------------ //
