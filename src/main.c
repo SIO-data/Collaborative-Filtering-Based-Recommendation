@@ -8,7 +8,7 @@
 
 #define ROWS 73421   // Replace with actual row count of your dataset
 #define COLS 100     // Replace with actual column count, excluding the first column
-#define THREADS 1
+#define THREADS 12
 
 float _bar(float *user){
     float sum = 0.0f;

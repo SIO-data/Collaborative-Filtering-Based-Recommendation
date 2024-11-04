@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "mycsv.hpp"
+#include "mycsv.h"
 
 #define ROWS 73421      // Define the maximum rows as needed
 #define COLS 100       // Define the maximum columns as needed
