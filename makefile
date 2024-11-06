@@ -12,6 +12,18 @@ BIN_FILE = $(BIN_DIR)/main
 CC = gcc
 CFLAGS = -Wall
 
+ifdef THREADS
+	CFLAGS += -DTHREADS=$(THREADS) -pthread
+endif
+
+ifdef OUTPUT_FILE
+	CFLAGS += -DOUTPUT_FILE=\"$(OUTPUT_FILE)\"
+endif
+
+ifdef ALPHA
+	CFLAGS += -DALPHA=$(ALPHA)
+endif
+
 # Default target
 all: $(BIN_FILE)
 

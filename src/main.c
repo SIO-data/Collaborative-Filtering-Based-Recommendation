@@ -3,12 +3,28 @@
 #include <math.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "mycsv.h"
 
 #define ROWS 73421   // Replace with actual row count of your dataset
 #define COLS 100     // Replace with actual column count, excluding the first column
-#define THREADS 12
+
+#ifndef THREADS
+#define THREADS 8
+#endif
+
+#ifndef OUTPUT_FILE
+#define OUTPUT_FILE "./output/estimated_results.csv"
+#endif
+
+#ifndef METHOD
+#define METHOD 1
+#endif
+
+#ifndef ALPHA
+#define ALPHA 0.5
+#endif
 
 float _bar(float *user){
     float sum = 0.0f;
@@ -67,7 +83,13 @@ float _estimation(int user, int resto, float *bar, float **data){
     float den = 0;
     for (int u = 0; u < ROWS; u++){
         if (u != user && data[u][resto] != 99.0f){
-            float _pearson = pearson(data[user], data[u], bar[user], bar[u]);
+
+            float _pearson;
+            if (METHOD == 1) // pearson method
+                _pearson = pearson(data[user], data[u], bar[user], bar[u]);
+            else // fallback to default method
+                _pearson = pearson(data[user], data[u], bar[user], bar[u]);
+                
             if (isnan(_pearson)) {
                 _pearson = 0.0f;
             }
@@ -113,6 +135,8 @@ void* perform_task(void* arg) {
 
 int main(int argc, char *argv[]) {
 
+    time_t start, end;
+
     // ------------------------------------------------- //
     // --------------- Memory Allocation --------------- //
     // ------------------------------------------------- //
@@ -143,11 +167,15 @@ int main(int argc, char *argv[]) {
 
     printf("Reading CSV file...\n");
 
+    time(&start);
+
     if (read_csv("./assets/data/recommendation_dataset.csv", data) != 0) {
         return 1;  // Exit if file read fails
     }
 
-    printf("CSV file read successfully.\n");
+    time(&end);
+
+    printf("CSV file read successfully in %.2lf seconds.\n", difftime(end, start));
 
     // ------------------------------------------------- //
     // ------------ Read Target CSV file --------------- //
@@ -155,23 +183,38 @@ int main(int argc, char *argv[]) {
 
     printf("Reading target CSV file...\n");
 
+    time(&start);
+
     if (read_target_csv("./assets/data/template.csv", user_resto) != 0) {
         return 1;  // Exit if file read fails
     }
 
-    printf("Target CSV file read successfully.\n");
+    time(&end);
+
+    printf("Target CSV file read successfully in %.2lf seconds.\n", difftime(end, start));
  
     // ------------------------------------------------- //
     // ------------ Compute User Estimations ----------- //
     // ------------------------------------------------- //
 
     // Compute all _bar values
+
+    printf("Computing bar values...\n");
+
+    time(&start);
+
     float *bars = _all_bar(data);
+
+    time(&end);
+
+    printf("Bar values computed successfully in %.2lf seconds.\n", difftime(end, start));
 
     // Compute all pearson values
     //float **pearson_matrix = all_pearson(data, bars);
 
     printf("Computing user estimations...\n");
+
+    time(&start);
 
     pthread_t threads[THREADS];
     for (int i = 0; i < THREADS; i++) {
@@ -188,7 +231,9 @@ int main(int argc, char *argv[]) {
         pthread_join(threads[i], NULL);
     }
 
-    printf("User estimations computed successfully.\n");
+    time(&end);
+
+    printf("User estimations computed successfully in %.2lf seconds.\n", difftime(end, start));
 
     // ------------------------------------------------- //
     // ----------------- Write to CSV ------------------ //
@@ -196,11 +241,15 @@ int main(int argc, char *argv[]) {
 
     printf("Writing to CSV file...\n");
 
-    if (write_estimated_csv("./assets/data/estimated_results.csv", output, user_resto) != 0) {
+    time(&start);
+
+    if (write_estimated_csv(OUTPUT_FILE, output, user_resto) != 0) {
         return 1;  // Exit if file write fails
     }
 
-    printf("CSV file written successfully.\n");
+    time(&end);
+
+    printf("CSV file written successfully in %.2lf seconds.\n", difftime(end, start));
 
     // Free allocated memory
     for (int i = 0; i < ROWS; i++) {
