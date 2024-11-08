@@ -29,7 +29,7 @@ jupyter notebook ./src/main.ipynb
 > Note: The code use as input the a converted version of the data. To convert the data, you can use the following command:
 
 ```bash
-make convert_data
+make clean && make
 ./bin/converter ./assets/data/recommendation_dataset.csv ./assets/data/converted.csv
 ```
 
