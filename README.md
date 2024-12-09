@@ -8,4 +8,4 @@ model = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=6, random_st
 | Parameters | MAE |
 | -------- | ------- |
 | 100 trees & 6 deep | 3.053 |
-| 200 trees & 6 deep | 3.134 |
+| 200 trees & 12 deep | 3.134 |
